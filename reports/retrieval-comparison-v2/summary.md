@@ -27,4 +27,6 @@ The original first run recorded one reranking-stage wall time of 667.556 seconds
 
 [The tokenizer audit](embedding-truncation.json) used the exact pinned MiniLM WordPiece tokenizer and configured limit of 256 tokens including special tokens, excluding batch padding. Across 228 chunks, 115 were truncated and the largest untruncated input was 642 tokens. Two fully contained approved evidence alternatives had tokens omitted in their chunks. These were unit 2 of `pipeline-cache-reuse-and-inspection` and unit 1 of `cross-validate-return-indices`. This audit concerns encoder input. The stored chunks remain intact for sparse retrieval and generation.
 
-Run `python -m scripts.compare_retrieval` and `python -m scripts.audit_embedding_truncation` from the repository root with prepared assets. Compare quality data separately from timing and provenance. Live generation and human scoring are separate and remain pending.
+Run `python -m scripts.compare_retrieval` and `python -m scripts.audit_embedding_truncation` from the repository root with prepared assets. Compare quality data separately from timing and provenance. At the time of this report, generation evaluation was pending.
+
+**Later update:** Groq generation was subsequently evaluated on the development split. See the [Groq development results](../../README.md#generation-groq-evaluation). The retrieval findings above are unchanged.

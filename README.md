@@ -20,7 +20,7 @@ python -m scripts.prepare_models
 python -m streamlit run app.py
 ~~~
 
-Setup downloads the pinned documentation pages and two local models of about 90 MB each. Encoding the corpus on CPU can take several minutes. Linux CI uses the same requirements file. To recreate the measured Windows Python 3.14.6 environment, use `requirements-windows-py314.lock`.
+Setup downloads the pinned documentation pages and two local models of about 90 MB each. Encoding the corpus on CPU can take several minutes. The pinned corpus build was tested with Python 3.14.6. Linux CI uses the same requirements file. To recreate the measured Windows Python 3.14.6 environment, use `requirements-windows-py314.lock`.
 
 Without provider configuration, a search shows a source-only notice and the retrieved sources.
 
@@ -31,13 +31,17 @@ To enable answers with Groq:
 3. Set `DOCGROUND_FREE_TIER_CONFIRMED=true` only after verifying that the key belongs to a Groq Free Plan project.
 4. Restart the app.
 
+Closely spaced Groq submissions can hit the per-minute token limit.
+
 To use Gemini instead, follow the [provider setup](docs/rag-engineering.md#provider-and-privacy). For the full offline test suite, run `python -m pytest tests -v`.
 
-## Verified development results
+## Development results
 
 The development split has 24 questions: 20 answerable and 4 unanswerable. These results guided development and come from a small sample. They do not estimate performance on unseen questions.
 
 ### Generation: Groq evaluation
+
+These figures summarize a private development run. The 12/20 figure covers all answerable questions. The 12/13 figure covers only the reviewed answers.
 
 | Measure | Result |
 | --- | ---: |
