@@ -1,0 +1,507 @@
+{
+  "annotation_schema_version": 2,
+  "corpus_revision": "01021d79036af9e2a1da8a58ab50e354c4cc3197bfa4eaa55c96e45351f59dca",
+  "annotation_version": "multi-document-v1",
+  "split": "development",
+  "questions": [
+    {
+      "id": "pipeline-nested-parameter-key",
+      "question": "A pipeline step named `clf` is an SVC. What key would you pass to `set_params` to set its `C` to 10?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "0f104d229911637b2b1eef1eaeee5c25e0f9c5e8c8ed55c874f075f7d4fa747b",
+            "start_block_path": "/blocks/1/text",
+            "end_block_path": "/blocks/1/text",
+            "start": 5142,
+            "end": 5172,
+            "manifest_id": "compose",
+            "document_id": "7d4643d54f8f94196c7347fde08ae4676a1a8d2bca45fa6a80645234e624ffb0"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "estimator-repr-text-mode",
+      "question": "Which setting switches scikit-learn’s notebook estimator display from its HTML representation to text?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "b668ffef010f37cea1e2cf90f77f441b0700ad3b8b8521ca2367863550e877bf",
+            "start_block_path": "/blocks/3/text",
+            "end_block_path": "/blocks/3/text",
+            "start": 20385,
+            "end": 20450,
+            "manifest_id": "compose",
+            "document_id": "7d4643d54f8f94196c7347fde08ae4676a1a8d2bca45fa6a80645234e624ffb0"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "leave-one-out-split-count",
+      "question": "With 12 samples, how many train/test splits does `LeaveOneOut` produce?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "7eab16927db82cb221a5975492dcb2e6b906b44cce449dcbc608811becd83dbb",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/0/text",
+            "start": 13449,
+            "end": 13542,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "cross-validate-return-indices",
+      "question": "Which `cross_validate` option makes the result retain the training and test indices for each split?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "979324a8953ca247796c013e30be7f5112bf7645c6e2b4759174804c1020ee86",
+            "start_block_path": "/blocks/4/text",
+            "end_block_path": "/blocks/4/text",
+            "start": 7749,
+            "end": 7904,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "confusion-matrix-axis-convention",
+      "question": "In scikit-learn’s confusion matrix, which axis is the true class and which is the predicted class?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "8f2209aac4b38e5515fc2dd314961aaf9cb88d5e97fc37abe94d1d64a09e5e32",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/1/text",
+            "start": 29716,
+            "end": 30075,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "top-k-accuracy-multilabel-support",
+      "question": "Does `top_k_accuracy_score` support multilabel classification?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "833328a2a0abe4162db700d5132aea731fdd063fc0a5044257209308bc0e0871",
+            "start_block_path": "/blocks/1/text",
+            "end_block_path": "/blocks/1/text",
+            "start": 24592,
+            "end": 24687,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "random-state-none-global-rng",
+      "question": "Why does the Common Pitfalls chapter apply its advice about `RandomState` instances to `random_state=None` as well?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "f0981bb86b47205556874123f5ab1486b018dde54422c25f036e008fe34a74e1",
+            "start_block_path": "/blocks/4/text",
+            "end_block_path": "/blocks/4/text",
+            "start": 10229,
+            "end": 10474,
+            "manifest_id": "common_pitfalls",
+            "document_id": "7c96bf1e360e8d3561b98313409323d2c074371cd71fa5599d50c247f03f652e"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "feature-union-duplicate-features",
+      "question": "If two `FeatureUnion` transformers produce the same feature, should you expect the union to remove the duplicate automatically? Who is responsible for avoiding it?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "8155ad2c6a8c8e2879cf464edd3d0d3785704f5ea1362988b195774bb6a3f9e1",
+            "start_block_path": "/blocks/4/text",
+            "end_block_path": "/blocks/4/text",
+            "start": 12430,
+            "end": 12646,
+            "manifest_id": "compose",
+            "document_id": "7d4643d54f8f94196c7347fde08ae4676a1a8d2bca45fa6a80645234e624ffb0"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "time-series-shuffle-autocorrelation",
+      "question": "Why can shuffling time-ordered observations before CV make the validation score look better than it should?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "07af235e435a70311718ca56f71425ae940702ecf8d1504f74d24d3e119bd552",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/0/text",
+            "start": 31005,
+            "end": 31301,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "stratification-fold-score-spread",
+      "question": "Why can stratification make the spread of CV scores understate uncertainty when classes are rare?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "3d11a491855ebdab2c58288092a4b8a0b13d35c4f033bdfa3ac57d958c36a9ff",
+            "start_block_path": "/blocks/4/text",
+            "end_block_path": "/blocks/5/text",
+            "start": 18073,
+            "end": 18502,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "explained-variance-systematic-offset",
+      "question": "If a regression model consistently predicts too high by a fixed amount, what distinction between explained variance and R² makes R² preferable?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "5a773ebebfb1badc7b728e5585fa1f416f82d7898ddd7f3e505756f005da77b1",
+            "start_block_path": "/blocks/5/text",
+            "end_block_path": "/blocks/5/text",
+            "start": 98367,
+            "end": 98660,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "log-loss-probability-input",
+      "question": "Why should you pass a classifier’s `predict_proba` output to log loss instead of its hard predictions?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "53f8ac444d3e703f80ddbcfab8366af8f92a2847701a4fbbc8189154c666d065",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/0/text",
+            "start": 48793,
+            "end": 49155,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          },
+          {
+            "section_id": "17cbd3b570589da92d2ff283a380bbf0b34c186a6aac0bbd0f0d14f03056efd5",
+            "start_block_path": "/blocks/1/blocks/1/items/2/0/text",
+            "end_block_path": "/blocks/1/blocks/1/items/2/0/text",
+            "start": 13966,
+            "end": 14118,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "pipeline-cache-reuse-and-inspection",
+      "question": "With pipeline caching enabled and PCA followed by SVC, when can two grid-search candidates reuse the same fitted PCA, and where should you inspect the fitted PCA in a fitted pipeline?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "f617e16c0d618bcb788ab9a0cd71341b2eca6de7d96b0480731fdf81b4f498a2",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/0/text",
+            "start": 6330,
+            "end": 6740,
+            "manifest_id": "compose",
+            "document_id": "7d4643d54f8f94196c7347fde08ae4676a1a8d2bca45fa6a80645234e624ffb0"
+          }
+        ],
+        [
+          {
+            "section_id": "f617e16c0d618bcb788ab9a0cd71341b2eca6de7d96b0480731fdf81b4f498a2",
+            "start_block_path": "/blocks/3/blocks/2/text",
+            "end_block_path": "/blocks/3/blocks/2/text",
+            "start": 7939,
+            "end": 8309,
+            "manifest_id": "compose",
+            "document_id": "7d4643d54f8f94196c7347fde08ae4676a1a8d2bca45fa6a80645234e624ffb0"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "cross-val-predict-partition-and-scoring",
+      "question": "For an out-of-fold prediction plot, what must be true about test-set membership for `cross_val_predict`, and why can scoring those pooled predictions differ from averaging CV fold scores?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "dc3cfca45703f85d9b521cb9a1e0cb09d7366a6d60c0e58910dfd0e07c1c9b18",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/0/text",
+            "start": 9481,
+            "end": 9614,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ],
+        [
+          {
+            "section_id": "dc3cfca45703f85d9b521cb9a1e0cb09d7366a6d60c0e58910dfd0e07c1c9b18",
+            "start_block_path": "/blocks/3/text",
+            "end_block_path": "/blocks/3/text",
+            "start": 9675,
+            "end": 10004,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "stratified-group-fold-goal-and-limit",
+      "question": "What two goals does `StratifiedGroupKFold` balance, and can it yield imbalanced folds even when perfect stratification is possible?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "960859b3e7518285afd9969e86576e094dce13ccd10db349cbf62c3924886d3f",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/0/text",
+            "start": 22976,
+            "end": 23197,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ],
+        [
+          {
+            "section_id": "960859b3e7518285afd9969e86576e094dce13ccd10db349cbf62c3924886d3f",
+            "start_block_path": "/blocks/3/blocks/0/items/2/0/text",
+            "end_block_path": "/blocks/3/blocks/0/items/2/0/text",
+            "start": 24603,
+            "end": 24722,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "r2-negative-baseline-and-comparability",
+      "question": "What does a negative R² say about performance relative to a constant mean predictor, and why should you be cautious comparing R² across different datasets? Assume the targets are nonconstant.",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "f0aa905bb85e2a8e9a78c95cd5bd2ad46d486d4cdc8a9f1476c32e19d4b3bd5c",
+            "start_block_path": "/blocks/2/text",
+            "end_block_path": "/blocks/2/text",
+            "start": 88367,
+            "end": 88603,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ],
+        [
+          {
+            "section_id": "f0aa905bb85e2a8e9a78c95cd5bd2ad46d486d4cdc8a9f1476c32e19d4b3bd5c",
+            "start_block_path": "/blocks/2/text",
+            "end_block_path": "/blocks/2/text",
+            "start": 88258,
+            "end": 88366,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mixed-text-categorical-fixed-validation",
+      "question": "A classifier uses a `ColumnTransformer` with `CountVectorizer` on a DataFrame’s `title` field and `OneHotEncoder` on its `city` field. The dataset ships with fixed training and validation sets. How should you specify the two column selectors and encode the split for `PredefinedSplit`?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "034e60627dbffe525097f3d3558a30bdc600fae61185fc30709693bbc89897ae",
+            "start_block_path": "/blocks/7/text",
+            "end_block_path": "/blocks/7/text",
+            "start": 16566,
+            "end": 16856,
+            "manifest_id": "compose",
+            "document_id": "7d4643d54f8f94196c7347fde08ae4676a1a8d2bca45fa6a80645234e624ffb0"
+          },
+          {
+            "section_id": "034e60627dbffe525097f3d3558a30bdc600fae61185fc30709693bbc89897ae",
+            "start_block_path": "/blocks/6/text",
+            "end_block_path": "/blocks/6/text",
+            "start": 15593,
+            "end": 15805,
+            "manifest_id": "compose",
+            "document_id": "7d4643d54f8f94196c7347fde08ae4676a1a8d2bca45fa6a80645234e624ffb0"
+          }
+        ],
+        [
+          {
+            "section_id": "8f818c2a3cda305253b19466a3c28c8bd98f1c3fbf135b679851c53e330bab77",
+            "start_block_path": "/blocks/1/text",
+            "end_block_path": "/blocks/1/text",
+            "start": 20396,
+            "end": 20546,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "log-target-wrapper-and-growth-metric",
+      "question": "For positive population counts that grow exponentially, which wrapper and forward and inverse functions let you fit a regressor on log-transformed targets and return predictions to the original scale? Which loss does the Model Evaluation chapter recommend for exponentially growing targets?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "01e8873ff0916dea1da3c4e2bd21f522dc6ee77a620fbafeaef6ad0a0fec2094",
+            "start_block_path": "/blocks/2/text",
+            "end_block_path": "/blocks/5/text",
+            "start": 10344,
+            "end": 10832,
+            "manifest_id": "compose",
+            "document_id": "7d4643d54f8f94196c7347fde08ae4676a1a8d2bca45fa6a80645234e624ffb0"
+          }
+        ],
+        [
+          {
+            "section_id": "b9d18bd684b7509b283dd0090e63d73f4539fa5088a8b7ea5446f0b74767e9d1",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/3/text",
+            "start": 92962,
+            "end": 93668,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "leave-one-experiment-out-balanced-score",
+      "question": "You have multiple experiments, each with both binary labels present in unequal proportions. In its example of holding out one entire experiment at a time, which splitter does the Cross-validation chapter use? Which metric equals the arithmetic mean of sensitivity and specificity?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "04ffa0d151597a7665b4ec5d25b913e3dc662a6bcaa5951a272d3bb74ea824bb",
+            "start_block_path": "/blocks/2/text",
+            "end_block_path": "/blocks/2/text",
+            "start": 25355,
+            "end": 25577,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ],
+        [
+          {
+            "section_id": "92559a1a2e108e1bfc6d5b6b8c1d868f55fe0652a7810bca3ca39fe7eccf6fed",
+            "start_block_path": "/blocks/1/text",
+            "end_block_path": "/blocks/1/text",
+            "start": 26001,
+            "end": 26220,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "precision-recall-threshold-final-holdout",
+      "question": "Which function lets you examine the precision–recall trade-off across decision thresholds, and can you use your final test set to select the threshold if you will report that set’s performance as a held-out estimate?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "418f8ec194d8054a84cab537a149f425cde107686ab3992d7ca4b006d2d0c43e",
+            "start_block_path": "/blocks/2/text",
+            "end_block_path": "/blocks/2/text",
+            "start": 35372,
+            "end": 35529,
+            "manifest_id": "model_evaluation",
+            "document_id": "3831fc2624f2e80700633bc849d91cb95ebc28361cd85a5da57248596c544e36"
+          }
+        ],
+        [
+          {
+            "section_id": "06b68e3475a3af161c1ee8f39c05b077063b42e0bb3fc0ef1d582017f83484d3",
+            "start_block_path": "/blocks/1/text",
+            "end_block_path": "/blocks/1/text",
+            "start": 2874,
+            "end": 2937,
+            "manifest_id": "common_pitfalls",
+            "document_id": "7c96bf1e360e8d3561b98313409323d2c074371cd71fa5599d50c247f03f652e"
+          },
+          {
+            "section_id": "983ef5f4b73d403bb025fdd3332a4180f83e7b356d4a8b5897085486c7ff8ca2",
+            "start_block_path": "/blocks/5/text",
+            "end_block_path": "/blocks/5/text",
+            "start": 1637,
+            "end": 2034,
+            "manifest_id": "cross_validation",
+            "document_id": "2881104a1f84550377a48ea646f9cd5fc1ee1a5cce99da1b562dfce5f54ffa3f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "column-transformer-sparse-density-cutoff",
+      "question": "According to the four pinned chapters, what is the default `sparse_threshold` value of `ColumnTransformer`?",
+      "answerable": false,
+      "evidence_units": []
+    },
+    {
+      "id": "time-series-split-gap-semantics",
+      "question": "According to the four pinned chapters, what does the `gap` parameter of `TimeSeriesSplit` control?",
+      "answerable": false,
+      "evidence_units": []
+    },
+    {
+      "id": "log-loss-float32-probability-clipping",
+      "question": "According to the four pinned chapters, what exact lower clipping bound does `log_loss` use for a predicted probability of zero when the probability array is float32?",
+      "answerable": false,
+      "evidence_units": []
+    },
+    {
+      "id": "permutation-p-value-monte-carlo-interval",
+      "question": "Which method do the four pinned chapters recommend for constructing a 95% Monte Carlo confidence interval around the `permutation_test_score` p-value from a finite number of permutations?",
+      "answerable": false,
+      "evidence_units": []
+    }
+  ]
+}

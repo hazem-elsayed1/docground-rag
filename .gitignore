@@ -1,0 +1,53 @@
+
+# Python virtual environment
+.venv/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+
+# Test and tool caches
+.pytest_cache/
+pytest-of-*/
+.ruff_cache/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+.envrc
+.netrc
+.pypirc
+.secrets/
+secrets/
+credentials.json
+secrets.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local data artifacts
+data/raw/
+data/processed/
+
+# Private frozen-test questions, labels and review records
+/annotations/frozen-test/*.json
+/frozen-test-question-draft.md
+/frozen-test-owner-approval.md
+
+# Generated model and embedding artifacts
+models/
+.cache/
+
+# Editor and operating system files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local human review and provider outputs
+.local/
+.streamlit/secrets.toml
+
+# Local review archive
+/docground-remediation.zip

@@ -1,0 +1,184 @@
+{
+  "annotation_schema_version": 1,
+  "annotation_version": "pilot-v1",
+  "corpus_revision": "7c96bf1e360e8d3561b98313409323d2c074371cd71fa5599d50c247f03f652e",
+  "split": "development",
+  "questions": [
+    {
+      "id": "Q1",
+      "question": "A regression model was trained on standardized features. What should happen to `X_test` before calling `predict` in the manual workflow?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "6025f191b831f2a0e2b98b20628af96f6bba3223c90a535a94967776413e5208",
+            "start_block_path": "/blocks/5/text",
+            "end_block_path": "/blocks/5/text",
+            "start": 1434,
+            "end": 1554
+          }
+        ],
+        [
+          {
+            "section_id": "6025f191b831f2a0e2b98b20628af96f6bba3223c90a535a94967776413e5208",
+            "start_block_path": "/blocks/8/text",
+            "end_block_path": "/blocks/8/text",
+            "start": 1768,
+            "end": 1883
+          }
+        ]
+      ]
+    },
+    {
+      "id": "Q2",
+      "question": "Why does the chapter’s random-label feature-selection example score well above chance when feature selection runs before the train/test split?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "79e3ef9172f09b14f07b25d1bf1d25d2389a8a7f2516b435fc297728efba49f2",
+            "start_block_path": "/blocks/6/text",
+            "end_block_path": "/blocks/6/text",
+            "start": 5397,
+            "end": 5749
+          }
+        ]
+      ]
+    },
+    {
+      "id": "Q3",
+      "question": "In the chapter’s cloning example, why can fitting one random forest affect the other after an explicit `RandomState` instance is passed?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "7fcfa8b68c9213e5a1995b55a955e852f03636fcb37282f5ffd0751b82b2d849",
+            "start_block_path": "/blocks/8/blocks/2/text",
+            "end_block_path": "/blocks/8/blocks/2/text",
+            "start": 15914,
+            "end": 16098
+          }
+        ]
+      ]
+    },
+    {
+      "id": "Q4",
+      "question": "Where should supervised feature selection go when you use `cross_val_score` to evaluate a classifier, and why?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "79e3ef9172f09b14f07b25d1bf1d25d2389a8a7f2516b435fc297728efba49f2",
+            "start_block_path": "/blocks/11/text",
+            "end_block_path": "/blocks/11/text",
+            "start": 7390,
+            "end": 7637
+          }
+        ],
+        [
+          {
+            "section_id": "79e3ef9172f09b14f07b25d1bf1d25d2389a8a7f2516b435fc297728efba49f2",
+            "start_block_path": "/blocks/13/text",
+            "end_block_path": "/blocks/13/text",
+            "start": 8184,
+            "end": 8387
+          }
+        ]
+      ]
+    },
+    {
+      "id": "Q5",
+      "question": "Why can calculating a preprocessing statistic, such as the mean, using the full dataset before a train/test split cause data leakage, even if the same transformation is applied consistently afterward?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "06b68e3475a3af161c1ee8f39c05b077063b42e0bb3fc0ef1d582017f83484d3",
+            "start_block_path": "/blocks/2/text",
+            "end_block_path": "/blocks/2/text",
+            "start": 3117,
+            "end": 3625
+          }
+        ]
+      ]
+    },
+    {
+      "id": "Q6",
+      "question": "In repeated cross-validation comparisons, what does an integer `random_state` control on a randomized estimator, and what does it control on a shuffled CV splitter?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "7fcfa8b68c9213e5a1995b55a955e852f03636fcb37282f5ffd0751b82b2d849",
+            "start_block_path": "/blocks/4/items/0/0/text",
+            "end_block_path": "/blocks/4/items/0/0/text",
+            "start": 14224,
+            "end": 14432
+          }
+        ],
+        [
+          {
+            "section_id": "f0981bb86b47205556874123f5ab1486b018dde54422c25f036e008fe34a74e1",
+            "start_block_path": "/blocks/1/items/0/0/text",
+            "end_block_path": "/blocks/1/items/0/0/text",
+            "start": 9823,
+            "end": 9915
+          }
+        ]
+      ]
+    },
+    {
+      "id": "Q7",
+      "question": "With a `RandomState` instance on a shuffled splitter, why can candidates within one `GridSearchCV.fit` call be compared fold by fold while scores from two separate calls should be treated differently?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "169529d4a1df856e180c9ded0aaaed29644f0a6e920cc18fb7ca559696ec0fe3",
+            "start_block_path": "/blocks/2/text",
+            "end_block_path": "/blocks/2/text",
+            "start": 17768,
+            "end": 18157
+          }
+        ]
+      ]
+    },
+    {
+      "id": "Q8",
+      "question": "How can you obtain reproducible results across separate program executions while allowing a randomized estimator to use different random states across cross-validation folds?",
+      "answerable": true,
+      "evidence_units": [
+        [
+          {
+            "section_id": "837b41ce7ca7c97d9f2b8be6911423d49a7645099d7a3d2536f67987fa361f7e",
+            "start_block_path": "/blocks/0/text",
+            "end_block_path": "/blocks/1/text",
+            "start": 18805,
+            "end": 19438
+          }
+        ],
+        [
+          {
+            "section_id": "da463f75dc63c144634de8e52cb49218df9974a0ca1754b35153ac4da33062f6",
+            "start_block_path": "/blocks/1/text",
+            "end_block_path": "/blocks/1/text",
+            "start": 20746,
+            "end": 20975
+          }
+        ]
+      ]
+    },
+    {
+      "id": "Q9",
+      "question": "According to the pinned Common Pitfalls chapter, what is the default value of the `strategy` parameter in `SimpleImputer`?",
+      "answerable": false,
+      "evidence_units": []
+    },
+    {
+      "id": "Q10",
+      "question": "What minimum number of CV folds does the chapter prescribe before average scores can be used to compare two estimators evaluated on different splits?",
+      "answerable": false,
+      "evidence_units": []
+    }
+  ]
+}

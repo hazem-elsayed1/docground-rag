@@ -1,0 +1,8 @@
+/annotations/development/pilot-v1.json text eol=lf
+/annotations/development/multi-document-v1.json text eol=lf
+/reports/bm25-development-pilot-v1/report.json text eol=lf
+/reports/bm25-development-pilot-v1/summary.md text eol=lf
+/reports/bm25-development-pilot-v1/publication-summary.md text eol=lf
+/reports/bm25-development-multi-document-v1/report.json text eol=lf
+/reports/bm25-development-multi-document-v1/summary.md text eol=lf
+/corpus/scikit-learn-1.9.1-v1.json text eol=lf

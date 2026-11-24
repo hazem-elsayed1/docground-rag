@@ -1,0 +1,18 @@
+{
+  "version": "minilm-windows-v1",
+  "top_k": 10,
+  "candidate_depth": 20,
+  "rrf_constant": 60,
+  "max_tokens": 256,
+  "overlap_content_tokens": 32,
+  "batch_size": 8,
+  "build_repeats": 3,
+  "query_repeats": 5,
+  "decision": {
+    "min_hybrid_gain": 1,
+    "min_dense_gain_on_hybrid_tie": 2,
+    "max_build_median_ratio": 2.0,
+    "max_query_p95_ratio": 1.25,
+    "max_artifact_ratio": 1.01
+  }
+}

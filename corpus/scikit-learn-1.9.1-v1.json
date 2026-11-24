@@ -1,0 +1,33 @@
+{
+  "manifest_schema_version": 1,
+  "corpus_version": "scikit-learn-1.9.1-v1",
+  "documentation_version": "1.9.1",
+  "attribution": {
+    "project": "scikit-learn",
+    "copyright": "The scikit-learn developers",
+    "license": "BSD-3-Clause",
+    "license_url": "https://github.com/scikit-learn/scikit-learn/blob/1.9.1/COPYING"
+  },
+  "documents": [
+    {
+      "id": "common_pitfalls",
+      "url": "https://scikit-learn.org/1.9/common_pitfalls.html",
+      "sha256": "21fac11c181ab35624dcf8673f0475d403d4f6ecf0f9bead01a573d7642b515c"
+    },
+    {
+      "id": "compose",
+      "url": "https://scikit-learn.org/1.9/modules/compose.html",
+      "sha256": "39446c9d43e7c9539b5fba7cdd0e4b4ef21d149b8a612723a930048f45889107"
+    },
+    {
+      "id": "cross_validation",
+      "url": "https://scikit-learn.org/1.9/modules/cross_validation.html",
+      "sha256": "78d7587fa92ba3b3e480c9d841b50fedc14ac29d571ccb319d4068235154f0e2"
+    },
+    {
+      "id": "model_evaluation",
+      "url": "https://scikit-learn.org/1.9/modules/model_evaluation.html",
+      "sha256": "7e740e140ba75771bb1c7de132babfd958c277b5529d187e7ba744e69729120c"
+    }
+  ]
+}
