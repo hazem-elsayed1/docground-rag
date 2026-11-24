@@ -71,6 +71,10 @@ class GenerationError(RuntimeError):
         self.retryable = retryable
 
 
+class ProviderNotConfigured(GenerationError):
+    """The key or free-tier confirmation is missing, so no request was sent. Recorded as provider_error."""
+
+
 class MalformedResponse(GenerationError):
     code = "malformed_response"
     stops_collection = False

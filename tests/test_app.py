@@ -1,11 +1,13 @@
 from pathlib import Path
 from hashlib import sha256
 import json
+import httpx2
 import pytest
 import streamlit as st
 from streamlit.testing.v1 import AppTest
 from src.corpus import build_corpus
-from src.generation import ContentBlocked, GenerationError, ResponseTruncated
+from src import groq
+from src.generation import ContentBlocked, GenerationError, ResponseTruncated, SYSTEM
 
 APP = Path(__file__).resolve().parents[1] / "app.py"
 
@@ -127,6 +129,191 @@ def test_answer_shows_verified_citation_and_marks_claim_support_unreviewed(evide
     at.text_area[0].input("What is a pipeline?")
     at.button[0].click().run()
     assert not at.exception and not at.error and not at.info
-    assert "Citation locations verified. Claim support has not been reviewed." in at.warning[0].value
+    assert "Quote locations verified. Claim support has not been reviewed." in at.warning[0].value
     assert any(item.value == "A pipeline is recommended." for item in at.text)
     assert len(at.get("link_button")) == 1
+    # The claim comes first, outside the source control that holds its quote, link and technical details.
+    source, retrieved = at.expander
+    assert (source.label, retrieved.label) == ("Show source", "Inspect retrieved sources")
+    assert [item.value for item in source.text] == ["Use a pipeline for the workflow."]
+    assert len(source.get("link_button")) == 1 and source.get("link_button")[0].proto.url.startswith("https://")
+    details = source.caption[-1].value
+    assert all(part in details for part in ("guide", "/blocks/0/text", "chars "))
+    order = [getattr(node, "value", None) or getattr(node, "label", None) for node in at.main]
+    positions = [order.index(value) for value in ("A pipeline is recommended.", "Show source", at.warning[0].value,
+                                                  "Inspect retrieved sources")]
+    assert positions == sorted(positions)
+
+
+QUOTE = "Use a pipeline for the workflow."
+SECRET = "provider-private-text"
+
+
+def grounded(request, quote=QUOTE):
+    source, = json.loads(json.loads(request.content)["messages"][1]["content"])["evidence"]
+    return httpx2.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(
+        {"status": "answered", "claims": [{"text": "A pipeline is recommended.", "kind": "explicit", "citations": [
+            {"chunk_id": source["chunk_id"], "document_id": source["document_id"], "quote": quote}]}]})}}]})
+
+
+@pytest.fixture
+def groq_http(monkeypatch):
+    """Select Groq through the environment and answer its HTTP requests in memory."""
+    monkeypatch.setenv("DOCGROUND_GENERATION_PROVIDER", "groq")
+    monkeypatch.setenv("GROQ_API_KEY", "fixture-credential")
+    monkeypatch.setenv("DOCGROUND_FREE_TIER_CONFIRMED", "true")
+    gemini, sleeps = [], []
+    monkeypatch.setattr("src.gemini.Gemini.generate", lambda self, contents: gemini.append(contents))
+    monkeypatch.setattr(groq, "_sleep", sleeps.append)
+    state = {"requests": [], "reply": grounded}
+
+    def handle(_transport, request):
+        state["requests"].append(request)
+        return state["reply"](request)
+
+    monkeypatch.setattr(httpx2.HTTPTransport, "handle_request", handle)
+    yield state
+    # Recorded instead of raised, because the app would report an exception as a failed answer.
+    assert gemini == [] and sleeps == []
+
+
+def submit(at, question="What is a pipeline?"):
+    at.text_area[0].input(question)
+    return at.button[0].click().run()
+
+
+def sources_visible(at):
+    panels = [panel for panel in at.expander if panel.label == "Inspect retrieved sources"]
+    return panels and any(QUOTE in item.value for item in panels[0].text)
+
+
+def shows_sources_only(at, name, key):
+    notice = at.info[0].value
+    return (not at.error and not at.exception and not at.warning and sources_visible(at) and "sources only" in notice
+            and f"{name} is not configured" in notice and key in notice and "DOCGROUND_FREE_TIER_CONFIRMED" in notice)
+
+
+def test_groq_form_submission_sends_one_request_and_shows_a_verified_answer(evidence_app, groq_http):
+    at = submit(evidence_app)
+    request, = groq_http["requests"]
+    assert (request.method, str(request.url)) == ("POST", groq.BASE_URL + "/chat/completions")
+    body = json.loads(request.content)
+    assert body == groq.request_body(body["messages"][1]["content"]) and body["messages"][0]["content"] == SYSTEM
+    assert json.loads(body["messages"][1]["content"])["question"] == "What is a pipeline?"
+    assert not at.exception and not at.error and sources_visible(at)
+    assert any(item.value == "A pipeline is recommended." for item in at.text) and len(at.get("link_button")) == 1
+    # A page rerun shows the stored turn. Only another submission sends another request, without waiting.
+    at.run()
+    assert len(groq_http["requests"]) == 1
+    submit(at)
+    assert len(groq_http["requests"]) == 2 and not at.exception
+
+
+def transport_failure(request):
+    raise httpx2.ReadTimeout(SECRET)
+
+
+@pytest.mark.parametrize(("reply", "message"), [
+    (lambda request: httpx2.Response(503, json={"error": {"message": SECRET}}), "temporarily unavailable"),
+    (lambda request: httpx2.Response(429, json={"error": {"message": SECRET}}), "rate limit"),
+    (lambda request: httpx2.Response(401, json={"error": {"message": SECRET}}), "authentication failed"),
+    (transport_failure, "timed out"),
+    (lambda request: httpx2.Response(200, content=SECRET.encode()), "unreadable response"),
+    (lambda request: httpx2.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+        "content": SECRET}}]}), "unexpected format"),
+    (lambda request: grounded(request, quote="not in the evidence"), "could not be located"),
+])
+def test_groq_form_failures_send_one_request_and_keep_sources_visible(evidence_app, groq_http, reply, message):
+    groq_http["reply"] = reply
+    at = submit(evidence_app)
+    assert len(groq_http["requests"]) == 1 and not at.exception
+    assert message in at.error[0].value and SECRET not in at.error[0].value and not at.info and not at.warning
+    assert sources_visible(at) and not any(item.value == "A pipeline is recommended." for item in at.text)
+
+
+def test_groq_submission_without_evidence_sends_no_request(evidence_app, groq_http):
+    at = submit(evidence_app, "Unknown question")
+    assert groq_http["requests"] == [] and "No documentation excerpts" in at.info[0].value and not at.exception
+
+
+@pytest.mark.parametrize("missing", ["GROQ_API_KEY", "DOCGROUND_FREE_TIER_CONFIRMED"])
+def test_groq_submission_without_configuration_sends_no_request(evidence_app, groq_http, monkeypatch, missing):
+    monkeypatch.delenv(missing)
+    at = submit(evidence_app)
+    assert groq_http["requests"] == [] and shows_sources_only(at, "Groq", "GROQ_API_KEY")
+
+
+def test_gemini_submission_without_configuration_shows_sources_only(evidence_app, monkeypatch):
+    requests = []
+    monkeypatch.setattr(httpx2.HTTPTransport, "handle_request", lambda _transport, request: requests.append(request))
+    at = submit(evidence_app)
+    assert requests == [] and shows_sources_only(at, "Gemini", "GEMINI_API_KEY")
+
+
+@pytest.mark.parametrize(("provider", "label"), [
+    (None, "Gemini · gemini-3.1-flash-lite"), ("gemini", "Gemini · gemini-3.1-flash-lite"),
+    ("groq", "Groq · openai/gpt-oss-20b"), ("other", "not recognized"),
+])
+def test_selected_provider_is_shown_before_any_submission_without_a_request(
+        evidence_app, groq_http, monkeypatch, provider, label):
+    if provider is None:
+        monkeypatch.delenv("DOCGROUND_GENERATION_PROVIDER")
+    else:
+        monkeypatch.setenv("DOCGROUND_GENERATION_PROVIDER", provider)
+    at = evidence_app.run()
+    assert f"Answer provider: {label}" in [item.value for item in at.caption]
+    assert groq_http["requests"] == [] and not at.exception and not at.error
+
+
+def test_several_citations_share_one_source_control(evidence_app, groq_http):
+    def two(request):
+        body = json.loads(grounded(request).content)
+        answer = json.loads(body["choices"][0]["message"]["content"])
+        first, = answer["claims"][0]["citations"]
+        answer["claims"][0]["citations"].append(first | {"quote": "for the workflow."})
+        body["choices"][0]["message"]["content"] = json.dumps(answer)
+        return httpx2.Response(200, json=body)
+
+    groq_http["reply"] = two
+    at = submit(evidence_app)
+    panel, _ = at.expander
+    assert panel.label == "Show 2 sources" and len(panel.get("link_button")) == 2 and not at.exception
+    assert [item.value for item in panel.text] == [QUOTE, "for the workflow."]
+
+
+def test_unknown_provider_sends_no_request_and_keeps_sources_visible(evidence_app, groq_http, monkeypatch):
+    monkeypatch.setenv("DOCGROUND_GENERATION_PROVIDER", "other")
+    at = submit(evidence_app)
+    assert groq_http["requests"] == [] and "gemini or groq" in at.error[0].value and sources_visible(at)
+
+
+@pytest.mark.parametrize("value", [None, "", "gemini"])
+def test_gemini_stays_the_default_even_when_a_groq_key_is_set(evidence_app, groq_http, monkeypatch, value):
+    if value is None:
+        monkeypatch.delenv("DOCGROUND_GENERATION_PROVIDER")
+    else:
+        monkeypatch.setenv("DOCGROUND_GENERATION_PROVIDER", value)
+    calls = []
+
+    def generate(self, contents):
+        calls.append(contents)
+        return json.dumps({"status": "insufficient", "claims": []}), {}
+
+    monkeypatch.setattr("src.gemini.Gemini.generate", generate)
+    at = submit(evidence_app)
+    assert len(calls) == 1 and groq_http["requests"] == [] and "insufficient evidence" in at.info[0].value
+
+
+def test_env_example_first_run_selects_groq_but_sends_nothing_until_configured(evidence_app, groq_http, monkeypatch):
+    lines = (APP.parent / ".env.example").read_text(encoding="utf-8").splitlines()
+    example = dict(line.split("=", 1) for line in lines if line and not line.startswith("#"))
+    assert example == {"DOCGROUND_GENERATION_PROVIDER": "groq", "GROQ_API_KEY": "", "GEMINI_API_KEY": "",
+                       "DOCGROUND_FREE_TIER_CONFIRMED": "false", "GEMINI_MODEL": "gemini-3.1-flash-lite"}
+    for name, value in example.items():
+        monkeypatch.setenv(name, value)
+    at = submit(evidence_app)
+    assert groq_http["requests"] == [] and shows_sources_only(at, "Groq", "GROQ_API_KEY")
+    # A key alone is not enough while the free-tier confirmation stays false.
+    monkeypatch.setenv("GROQ_API_KEY", "fixture-credential")
+    submit(at)
+    assert groq_http["requests"] == [] and shows_sources_only(at, "Groq", "GROQ_API_KEY")

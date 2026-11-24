@@ -2,9 +2,11 @@
 
 DocGround answers questions about four pinned scikit-learn 1.9.1 documentation chapters and shows the evidence behind each answer. It searches 228 chunks that keep their source coordinates, asks a language model for individually cited claims, and checks every quoted passage against the exact document revision. An answer with a citation that cannot be verified is rejected. A verified quote shows where the text came from. It does not prove that the claim is right.
 
-**Streamlit uses Gemini for generation. Groq was used only for evaluation.** The generation results below come from `openai/gpt-oss-20b` on Groq. Gemini has no scored results, so they do not measure the app's answer quality. Retrieval and source inspection work without a provider key.
+**Groq is the recommended provider for a first run.** The Streamlit app also supports Gemini, which it uses when no provider is set. The generation results below come from `openai/gpt-oss-20b` on Groq. Gemini has no scored results. Retrieval and source inspection work without a provider key.
 
-![DocGround showing retrieved documentation sources without a provider key](docs/images/streamlit-sources.png)
+![Keyless DocGround retrieval demo showing the selected provider, a source-only notice and retrieved sources](docs/images/streamlit-sources.png)
+
+*Keyless retrieval demo with Groq selected. No answer was requested or generated.*
 
 ## Run the application
 
@@ -20,7 +22,16 @@ python -m streamlit run app.py
 
 Setup downloads the pinned documentation pages and two local models of about 90 MB each. Encoding the corpus on CPU can take several minutes. Linux CI uses the same requirements file. To recreate the measured Windows Python 3.14.6 environment, use `requirements-windows-py314.lock`.
 
-Without a Gemini key, a search shows an offline message and the retrieved sources. To enable answers, follow the [provider setup](docs/rag-engineering.md#provider-and-privacy). For the full offline test suite, run `python -m pytest tests -v`.
+Without provider configuration, a search shows a source-only notice and the retrieved sources.
+
+To enable answers with Groq:
+
+1. Copy `.env.example` to `.env`. It selects Groq.
+2. Set `GROQ_API_KEY` in `.env`.
+3. Set `DOCGROUND_FREE_TIER_CONFIRMED=true` only after verifying that the key belongs to a Groq Free Plan project.
+4. Restart the app.
+
+To use Gemini instead, follow the [provider setup](docs/rag-engineering.md#provider-and-privacy). For the full offline test suite, run `python -m pytest tests -v`.
 
 ## Verified development results
 

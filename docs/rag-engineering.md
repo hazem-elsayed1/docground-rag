@@ -17,8 +17,8 @@ flowchart TD
   Optional --> Context
   Sparse --> Context
   Dense --> Context
-  Context --> Gemini[Gemini structured claims]
-  Gemini --> Validate[Resolve references against supplied fields]
+  Context --> Provider[Gemini or Groq structured claims]
+  Provider --> Validate[Resolve references against supplied fields]
   Validate --> UI[Claims and sources, abstention or service error]
 ~~~
 
@@ -28,7 +28,7 @@ The application imports `src.runtime` and `src.generation`. It has no annotation
 
 Use a CPU host with Python 3.14, a virtual environment, local disk and HTTPS access for initial setup. Execute the five commands in the README from the checkout root. For BM25 alone, skip model preparation and choose BM25 in the UI. Full installation needs two model files of about 90 MB each, Python wheels and temporary download space. Allow several GB of disk and RAM for provisioning. Actual memory consumption depends on candidate depth, text length and concurrent users. Each ONNX session uses two intra-op threads. The Streamlit process caches one selected retriever at a time.
 
-Linux CI uses Python 3.14 and installs `requirements-app.txt`, which pins the app's direct dependencies, including the Gemini HTTP transport. The Windows lock captures the measured Python 3.14.6 environment. Install it on Windows with `python -m pip install -r requirements-windows-py314.lock`. The comparison JSON records all installed distribution versions. Run `python -m pip check` and `python -m pytest tests -v` after installing the full app requirements. The base `requirements.txt` is sufficient for the historical ingestion-only reproduction.
+Linux CI uses Python 3.14 and installs `requirements-app.txt`, which pins the app's direct dependencies, including the HTTP transport both providers use. The Windows lock captures the measured Python 3.14.6 environment. Install it on Windows with `python -m pip install -r requirements-windows-py314.lock`. The comparison JSON records all installed distribution versions. Run `python -m pip check` and `python -m pytest tests -v` after installing the full app requirements. The base `requirements.txt` is sufficient for the historical ingestion-only reproduction.
 
 The test suite runs offline. Before pytest imports any test module, `tests/conftest.py` removes provider credentials and disables `.env` loading. It also blocks non-loopback traffic through Python's socket connect and datagram send calls, its DNS lookups, and the Windows asyncio Proactor. Any attempt fails the run, including one a test catches. Native extensions that open their own sockets remain outside this guard. The module docstring lists the covered entry points and limits. The Streamlit app and `python -m scripts.evaluate_generation collect` load `.env` without overriding existing variables. The `references` and `score` actions never read it.
 
@@ -36,9 +36,33 @@ Start a local instance with `python -m streamlit run app.py --server.address 127
 
 ## Provider and privacy
 
-Copy `.env.example` to a local `.env` or supply environment variables. `GEMINI_API_KEY` authenticates the Developer API. `GEMINI_MODEL` defaults to `gemini-3.1-flash-lite`. Set `DOCGROUND_FREE_TIER_CONFIRMED=true` only after verifying that the key belongs to a free-tier project with billing disabled and that the chosen model is eligible. The switch records operator confirmation. Model quotas, region eligibility and terms can change. A Google AI Pro subscription alone does not establish API eligibility. Current official model and pricing references are [Google's model catalog](https://ai.google.dev/gemini-api/docs/models) and [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing).
+Copy `.env.example` to a local `.env` or supply environment variables. Restart the app after a change. `DOCGROUND_GENERATION_PROVIDER` selects the Streamlit provider. Accepted values are exactly `groq` and `gemini`. Any other value shows an error and sends no request. The app uses Gemini when the setting is unset or empty. It never switches providers after a failure. Both providers share retrieval, the system prompt, answer schema and citation validation. The app shows the selected provider and model without calling it. When its key or free-tier confirmation is missing, the app shows a source-only notice and sends no request. Generation failures appear as errors, and retrieved sources stay visible in both cases. The setting does not affect `collect` or `score`, which use Gemini unless given `--provider groq`.
 
-The hosted provider receives the current question and selected public documentation excerpts. Avoid entering personal or confidential information in free-tier prompts. Requests use a 30-second HTTP timeout per attempt. Interactive calls permit at most two attempts. The SDK repeats a request after HTTP 429, 500, 502, 503 or 504, or after a connection failure or timeout, so the longest interactive wait is about one minute. Evaluation uses one SDK attempt per recorded request. Authentication, permission and other rejected requests are never repeated. Neither are local request errors or malformed success responses, which stop a collection run. Content blocks and empty answers in a well-formed response are final outcomes for that question. Provider log fields carry known reason codes, class names or `unknown`, never raw provider values. The `src/gemini.py` docstring tabulates each outcome's code, retry eligibility and effect on collection. No tools or external search are available to the model. The provider adapter handles authentication, quota, transport, truncation and empty responses. Token usage is recorded when returned. Log records include model and usage fields on successful requests. User-visible errors omit raw SDK exceptions, prompts and keys. For SDK usage and output schemas see [Google GenAI SDK](https://googleapis.github.io/python-genai/) and [structured output](https://ai.google.dev/gemini-api/docs/structured-output).
+Set `DOCGROUND_FREE_TIER_CONFIRMED=true` only after verifying that the selected provider's key belongs to a free plan with no paid billing. The switch records operator confirmation and covers whichever provider is selected, so verify again when switching. Model quotas, eligibility and terms can change.
+
+### Groq (recommended)
+
+~~~sh
+DOCGROUND_GENERATION_PROVIDER=groq
+GROQ_API_KEY=your-key
+DOCGROUND_FREE_TIER_CONFIRMED=true
+~~~
+
+The model is fixed to `openai/gpt-oss-20b`. Each submission with evidence sends one generation request with a 60-second HTTP timeout, no metadata request and no automatic retry. A submission without retrieved evidence sends none. The 75-second evaluation pacing does not apply to the app, so closely spaced submissions can reach the per-minute token limit. The citation check rejected 7 of 24 responses in the development evaluation, so expect some rejected answers.
+
+### Gemini (supported)
+
+~~~sh
+DOCGROUND_GENERATION_PROVIDER=gemini
+GEMINI_API_KEY=your-key
+DOCGROUND_FREE_TIER_CONFIRMED=true
+~~~
+
+`GEMINI_API_KEY` authenticates the Developer API. `GEMINI_MODEL` defaults to `gemini-3.1-flash-lite`. Verify that the chosen model is eligible. A Google AI Pro subscription alone does not establish API eligibility. See [Google's model catalog](https://ai.google.dev/gemini-api/docs/models) and [Gemini API pricing](https://ai.google.dev/gemini-api/docs/pricing). For SDK usage and output schemas see [Google GenAI SDK](https://googleapis.github.io/python-genai/) and [structured output](https://ai.google.dev/gemini-api/docs/structured-output).
+
+### Requests and privacy
+
+The hosted provider receives the current question and selected public documentation excerpts. Avoid entering personal or confidential information in free-tier prompts. Gemini requests use a 30-second HTTP timeout per attempt. Interactive Gemini calls permit at most two attempts. The Gemini SDK repeats a request after HTTP 429, 500, 502, 503 or 504, or after a connection failure or timeout, so the longest interactive Gemini wait is about one minute. Evaluation uses one request per recorded attempt. Authentication, permission and other rejected requests are never repeated. Neither are local request errors or malformed success responses, which stop a collection run. Content blocks and empty answers in a well-formed response are final outcomes for that question. Provider log fields carry known reason codes, class names or `unknown`, never raw provider values. The `src/gemini.py` and `src/groq.py` docstrings tabulate each outcome's code, retry eligibility and effect on collection. No tools or external search are available to the model. The provider adapter handles authentication, quota, transport, truncation and empty responses. Token usage is recorded when returned. Log records include model and usage fields on successful requests. User-visible errors omit raw provider exceptions, prompts and keys.
 
 ## Retrieval and reproducibility
 
@@ -65,9 +89,9 @@ K is 1, 3, 5 or 10. Relevance for precision, recall and reciprocal rank uses ove
 
 Each query selects up to ten chunks. Context selection retains complete chunks under 16,000 serialized UTF-8 bytes and removes duplicate section/text entries. This conservative byte budget applies to evidence. The output cap is 4,096 model tokens. The prompt and JSON evidence occupy separate system and user roles. Previous turns are for display only. Malformed responses, invalid citations and output truncation have distinct messages and evaluation codes. A truncated response is discarded before parsing and recording it does not stop collection as an outage. The app distinguishes local abstention when no excerpts were selected from a model judgment of insufficient or conflicting evidence. Any invalid citation rejects the whole response before display. No numerical answerability threshold has been calibrated.
 
-The model returns a status and atomic claims with explicit/inference labels and citations. The application resolves each reference to a single supplied chunk, exact document revision and unique verbatim match within one source field. The server computes the coordinates and versioned URL. Ambiguous repeated quotes are rejected. Semantic support requires human review. The UI explicitly identifies generated claims as unreviewed and flags evidence removed by the context byte budget.
+The model returns a status and atomic claims with explicit/inference labels and citations. The application resolves each reference to a single supplied chunk, exact document revision and unique verbatim match within one source field. The server computes the coordinates and versioned URL. Ambiguous repeated quotes are rejected. Semantic support requires human review. The UI shows each claim first, with its exact quote, link and location details under a source control. It identifies generated claims as unreviewed and flags evidence removed by the context byte budget.
 
-The development reference command validates all 24 reviewed IDs. Follow the [citation and outage protocol](citation-and-outage-protocol.md) to run the controlled development collection, complete claim-level judgments and score the results. The [Groq development results](../README.md#generation-groq-evaluation) report one scored run of `openai/gpt-oss-20b`, using AI-assisted judgments. Gemini, which the Streamlit app uses, remains unscored. Live prompt-injection resistance and contradiction handling remain unmeasured for both providers.
+The development reference command validates all 24 reviewed IDs. Follow the [citation and outage protocol](citation-and-outage-protocol.md) to run the controlled development collection, complete claim-level judgments and score the results. The [Groq development results](../README.md#generation-groq-evaluation) report one scored run of `openai/gpt-oss-20b`, using AI-assisted judgments. Gemini remains unscored. Live prompt-injection resistance and contradiction handling remain unmeasured for both providers.
 
 ## Review and holdout protocol
 
@@ -75,4 +99,4 @@ Review code and development decisions locally, then obtain independent review. R
 
 ## Limitations for adversarial review
 
-The development set has 20 answerable questions. A single changed answer moves complete evidence coverage five percentage points. Development selection cannot estimate holdout performance. One approved span crosses a chunk boundary. The saved MiniLM audit found 115 of 228 chunks exceed the 256-token encoder limit, with approved evidence tokens omitted in two chunks. This concerns encoder input. The original chunk text remains available for BM25 and generation. See the [tokenizer audit](../reports/retrieval-comparison-v2/embedding-truncation.json). RRF discards absolute score gaps, and cross-encoder scores do not measure answerability. Synthetic provider tests establish protocol handling. Live quality, prompt-injection resistance, quota behavior and conflict detection need separate measurement. A valid quoted passage can be irrelevant to the generated claim. The configuration switch cannot inspect a Google project's billing state. Streamlit session history is in process memory and capped at five turns. Process health indicates local process liveness. Hosted deployment, concurrent serving and live Gemini quality require separate verification.
+The development set has 20 answerable questions. A single changed answer moves complete evidence coverage five percentage points. Development selection cannot estimate holdout performance. One approved span crosses a chunk boundary. The saved MiniLM audit found 115 of 228 chunks exceed the 256-token encoder limit, with approved evidence tokens omitted in two chunks. This concerns encoder input. The original chunk text remains available for BM25 and generation. See the [tokenizer audit](../reports/retrieval-comparison-v2/embedding-truncation.json). RRF discards absolute score gaps, and cross-encoder scores do not measure answerability. Synthetic provider tests establish protocol handling. Live quality, prompt-injection resistance, quota behavior and conflict detection need separate measurement. A valid quoted passage can be irrelevant to the generated claim. The configuration switch cannot inspect a provider account's billing state. Streamlit session history is in process memory and capped at five turns. Process health indicates local process liveness. Hosted deployment, concurrent serving and live answer quality require separate verification.

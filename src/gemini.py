@@ -37,7 +37,8 @@ import httpx2
 import pydantic
 from google import genai
 from google.genai import errors, types
-from src.generation import ContentBlocked, EmptyResponse, GenerationError, ResponseTruncated, SYSTEM
+from src.generation import (ContentBlocked, EmptyResponse, GenerationError, ProviderNotConfigured,
+                            ResponseTruncated, SYSTEM)
 
 DEFAULT_MODEL = "gemini-3.1-flash-lite"
 LOG = logging.getLogger(__name__)
@@ -170,7 +171,7 @@ class Gemini:
     def _client(self):
         key = os.getenv("GEMINI_API_KEY")
         if not key or os.getenv("DOCGROUND_FREE_TIER_CONFIRMED") != "true":
-            raise GenerationError("Gemini is offline. Configure a verified free-tier project and API key.")
+            raise ProviderNotConfigured("Gemini is offline. Configure a verified free-tier project and API key.")
         options = types.HttpOptions(base_url="https://generativelanguage.googleapis.com", timeout=TIMEOUT_MS,
             retry_options=types.HttpRetryOptions(attempts=self.attempts, initial_delay=1,
                                                 max_delay=3, http_status_codes=list(TRANSIENT_HTTP)))

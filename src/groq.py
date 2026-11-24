@@ -1,4 +1,4 @@
-"""Groq provider for development evaluation only. The Streamlit app does not use it.
+"""Groq provider for development evaluation and, when selected, the Streamlit app.
 
 Sends the v3 system instruction and the strict response schema through Groq's OpenAI-compatible chat
 completions endpoint over the pinned httpx2 transport. Messages and logs never contain provider response
@@ -27,6 +27,7 @@ request: the client neither retries nor follows redirects. Generation requests f
 start at least ``MIN_INTERVAL_S`` seconds apart, which keeps one collection invocation under the Free Plan
 per-minute token limit. The collector waits through ``wait_for_slot`` before writing each start checkpoint,
 outside the timed attempt. The model metadata request is not paced.
+The app builds a new instance for each submission, sends no metadata request and is not paced.
 """
 import logging
 import os
@@ -35,8 +36,8 @@ import time
 import httpx2
 
 from src.gemini import MAX_OUTPUT_TOKENS, TRANSIENT_HTTP, TRANSIENT_TRANSPORT, _RESPONSE_SCHEMA
-from src.generation import (ContentBlocked, EmptyResponse, GenerationError, MalformedResponse, ResponseTruncated,
-                            SYSTEM)
+from src.generation import (ContentBlocked, EmptyResponse, GenerationError, MalformedResponse,
+                            ProviderNotConfigured, ResponseTruncated, SYSTEM)
 
 MODEL = "openai/gpt-oss-20b"
 BASE_URL = "https://api.groq.com/openai/v1"
@@ -115,7 +116,7 @@ class Groq:
         # Reads the process environment only. The collector loads any local .env file.
         key = os.getenv("GROQ_API_KEY")
         if not key or os.getenv("DOCGROUND_FREE_TIER_CONFIRMED") != "true":
-            raise GenerationError("Groq is offline. Configure a verified free-plan project and API key.")
+            raise ProviderNotConfigured("Groq is offline. Configure a verified free-plan project and API key.")
         return {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 
     def wait_for_slot(self) -> None:
