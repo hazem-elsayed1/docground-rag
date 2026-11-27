@@ -1,15 +1,44 @@
 from pathlib import Path
 from hashlib import sha256
 import json
+import re
 import httpx2
 import pytest
 import streamlit as st
 from streamlit.testing.v1 import AppTest
+from streamlit.testing.v1.element_tree import Expander, Text
 from src.corpus import build_corpus
 from src import groq
 from src.generation import ContentBlocked, GenerationError, ResponseTruncated, SYSTEM
 
 APP = Path(__file__).resolve().parents[1] / "app.py"
+SUPPORT_NOTICE = ("Each quote was found at its cited location in the documentation. Whether the quote "
+                  "supports the claim has not been reviewed, so read the quote before relying on the claim.")
+
+
+def shown(node):
+    """Visible text under ``node``: Markdown with its escapes removed, plain text and captions."""
+    values = ([item.value for item in node.markdown] + [item.value for item in node.text]
+              + [item.value for item in node.caption])
+    return [re.sub(r"\\(.)", r"\1", value) for value in values]
+
+
+def outside_expanders(node):
+    """Elements visible without opening an expander."""
+    for child in getattr(node, "children", {}).values():
+        if not isinstance(child, Expander):
+            yield child
+            yield from outside_expanders(child)
+
+
+def visible_plain_text(at):
+    """Plain-text elements (st.text) outside every expander, in page order."""
+    return [node.value for node in outside_expanders(at.main) if isinstance(node, Text)]
+
+
+def details(at):
+    panel, = [panel for panel in at.expander if panel.label == "Retrieval details"]
+    return panel
 
 
 def test_empty_submission_and_retrieval_failure_are_safe(monkeypatch, tmp_path):
@@ -25,10 +54,15 @@ def test_empty_submission_and_retrieval_failure_are_safe(monkeypatch, tmp_path):
 
 @pytest.fixture
 def evidence_app(tmp_path, monkeypatch):
+    return fixture_app(tmp_path, monkeypatch, "<p>Use a pipeline for the workflow.</p>")
+
+
+def fixture_app(tmp_path, monkeypatch, body):
+    """The app over a one-page corpus built from ``body`` with the real ingestion, using BM25."""
     st.cache_resource.clear()
     url = "https://scikit-learn.org/1.9/guide.html"
     html = (f'<title>Fixture — scikit-learn 1.9.1 documentation</title><link rel="canonical" href="{url}">'
-            '<article><h1 id="guide">Guide</h1><p>Use a pipeline for the workflow.</p></article>').encode()
+            f'<article><h1 id="guide">Guide</h1>{body}</article>').encode()
     (tmp_path / "guide.html").write_bytes(html)
     manifest = {"manifest_schema_version": 1, "corpus_version": "test", "documentation_version": "1.9.1",
                 "attribution": {"project": "scikit-learn", "copyright": "The scikit-learn developers",
@@ -78,7 +112,8 @@ def test_generation_outcomes_render_separately(evidence_app, monkeypatch, outcom
     assert not at.exception and at.expander
     assert message in getattr(at, level)[0].value
     assert not getattr(at, "info" if level == "error" else "error")
-    assert not any(item.value == "invented" for item in at.text)
+    assert not any("invented" in value for value in shown(at))
+    assert not at.get("link_button") and SUPPORT_NOTICE not in [item.value for item in at.warning]
 
 
 def test_unexpected_generation_failure_is_not_reported_as_a_search_failure(evidence_app, monkeypatch):
@@ -129,20 +164,77 @@ def test_answer_shows_verified_citation_and_marks_claim_support_unreviewed(evide
     at.text_area[0].input("What is a pipeline?")
     at.button[0].click().run()
     assert not at.exception and not at.error and not at.info
-    assert "Quote locations verified. Claim support has not been reviewed." in at.warning[0].value
-    assert any(item.value == "A pipeline is recommended." for item in at.text)
-    assert len(at.get("link_button")) == 1
-    # The claim comes first, outside the source control that holds its quote, link and technical details.
-    source, retrieved = at.expander
-    assert (source.label, retrieved.label) == ("Show source", "Inspect retrieved sources")
-    assert [item.value for item in source.text] == ["Use a pipeline for the workflow."]
-    assert len(source.get("link_button")) == 1 and source.get("link_button")[0].proto.url.startswith("https://")
-    details = source.caption[-1].value
-    assert all(part in details for part in ("guide", "/blocks/0/text", "chars "))
-    order = [getattr(node, "value", None) or getattr(node, "label", None) for node in at.main]
-    positions = [order.index(value) for value in ("A pipeline is recommended.", "Show source", at.warning[0].value,
-                                                  "Inspect retrieved sources")]
+    # Quote location and claim support stay distinct: the location is verified, the support is not reviewed.
+    assert [item.value for item in at.warning] == [SUPPORT_NOTICE]
+    visible = list(outside_expanders(at.main))
+    visible_text = [re.sub(r"\\(.)", r"\1", node.value) for node in visible
+                    if isinstance(getattr(node, "value", None), str)]
+    assert "A pipeline is recommended." in visible_text
+    assert "Exact quote · location verified" in visible_text
+    assert "Source: Guide" in visible_text
+    # The quote is plain text, outside any expander, exactly as cited.
+    assert visible_plain_text(at) == ["Use a pipeline for the workflow."]
+    link, = at.get("link_button")
+    assert link in visible and link.proto.label == "Open source passage" and link.proto.url.startswith("https://")
+    # Read in order: the notice, the claim, then its quote, source and link, then the expandable details.
+    def name(node):
+        if getattr(node, "type", None) == "link_button":
+            return "link"
+        value = getattr(node, "value", None) or getattr(node, "label", None)
+        return re.sub(r"\\(.)", r"\1", value) if isinstance(value, str) else None
+
+    order = [name(node) for node in at.main]
+    positions = [order.index(value) for value in (
+        "Answer", SUPPORT_NOTICE, "A pipeline is recommended.", "Use a pipeline for the workflow.",
+        "Source: Guide", "link", "Retrieval details")]
     assert positions == sorted(positions)
+    # Retrieval scores and chunk metadata appear only inside the details expander.
+    assert not any(re.search(r"\bscore \d|chars \d|/blocks/", text) for text in visible_text)
+    panel_text = " ".join(shown(details(at)))
+    assert all(part in panel_text for part in ("guide", "/blocks/0/text", "chars ", "score ", "included in answer context"))
+
+
+def test_insufficient_evidence_is_a_distinct_state_with_sources_available(evidence_app, monkeypatch):
+    monkeypatch.setattr("src.gemini.Gemini.generate",
+                        lambda self, contents: (json.dumps({"status": "insufficient", "claims": []}), {}))
+    at = evidence_app
+    at.text_area[0].input("How do I train a neural network on a GPU?")
+    at.button[0].click().run()
+    assert not at.exception and not at.error and not at.get("link_button")
+    assert [item.value for item in at.subheader] == ["Not enough evidence to answer"]
+    assert "The model reported insufficient evidence for an answer." in at.info[0].value
+    assert any("answers only from the four pinned scikit-learn 1.9.1 chapters" in item.value for item in at.caption)
+    assert SUPPORT_NOTICE not in [item.value for item in at.warning]
+    assert "Use a pipeline for the workflow." in " ".join(shown(details(at)))
+
+
+def test_conflicting_evidence_has_its_own_heading(evidence_app, monkeypatch):
+    monkeypatch.setattr("src.gemini.Gemini.generate",
+                        lambda self, contents: (json.dumps({"status": "conflicting", "claims": []}), {}))
+    at = evidence_app
+    at.text_area[0].input("What is a pipeline?")
+    at.button[0].click().run()
+    assert [item.value for item in at.subheader] == ["The evidence conflicts"] and not at.get("link_button")
+
+
+def test_inference_claims_are_labelled_and_model_text_is_shown_literally(evidence_app, monkeypatch):
+    claim_text = "Pipelines **help** [click](https://attacker.example) :red[always]"
+
+    def generate(self, contents):
+        source, = json.loads(contents)["evidence"]
+        return json.dumps({"status": "answered", "claims": [{"text": claim_text, "kind": "inference", "citations": [
+            {"chunk_id": source["chunk_id"], "document_id": source["document_id"],
+             "quote": "Use a pipeline for the workflow."}]}]}), {}
+
+    monkeypatch.setattr("src.gemini.Gemini.generate", generate)
+    at = evidence_app
+    at.text_area[0].input("What is a pipeline?")
+    at.button[0].click().run()
+    assert not at.exception
+    assert any(item.value.startswith("Inference:") for item in at.caption)
+    rendered = [item.value for item in at.markdown if "Pipelines" in item.value]
+    assert rendered == [r"Pipelines \*\*help\*\* \[click\]\(https\://attacker\.example\) \:red\[always\]"]
+    assert claim_text in shown(at)
 
 
 QUOTE = "Use a pipeline for the workflow."
@@ -183,7 +275,7 @@ def submit(at, question="What is a pipeline?"):
 
 
 def sources_visible(at):
-    panels = [panel for panel in at.expander if panel.label == "Inspect retrieved sources"]
+    panels = [panel for panel in at.expander if panel.label == "Retrieval details"]
     return panels and any(QUOTE in item.value for item in panels[0].text)
 
 
@@ -201,7 +293,7 @@ def test_groq_form_submission_sends_one_request_and_shows_a_verified_answer(evid
     assert body == groq.request_body(body["messages"][1]["content"]) and body["messages"][0]["content"] == SYSTEM
     assert json.loads(body["messages"][1]["content"])["question"] == "What is a pipeline?"
     assert not at.exception and not at.error and sources_visible(at)
-    assert any(item.value == "A pipeline is recommended." for item in at.text) and len(at.get("link_button")) == 1
+    assert "A pipeline is recommended." in shown(at) and len(at.get("link_button")) == 1
     # A page rerun shows the stored turn. Only another submission sends another request, without waiting.
     at.run()
     assert len(groq_http["requests"]) == 1
@@ -228,7 +320,7 @@ def test_groq_form_failures_send_one_request_and_keep_sources_visible(evidence_a
     at = submit(evidence_app)
     assert len(groq_http["requests"]) == 1 and not at.exception
     assert message in at.error[0].value and SECRET not in at.error[0].value and not at.info and not at.warning
-    assert sources_visible(at) and not any(item.value == "A pipeline is recommended." for item in at.text)
+    assert sources_visible(at) and "A pipeline is recommended." not in shown(at)
 
 
 def test_groq_submission_without_evidence_sends_no_request(evidence_app, groq_http):
@@ -265,7 +357,7 @@ def test_selected_provider_is_shown_before_any_submission_without_a_request(
     assert groq_http["requests"] == [] and not at.exception and not at.error
 
 
-def test_several_citations_share_one_source_control(evidence_app, groq_http):
+def test_several_citations_appear_under_their_claim(evidence_app, groq_http):
     def two(request):
         body = json.loads(grounded(request).content)
         answer = json.loads(body["choices"][0]["message"]["content"])
@@ -276,9 +368,35 @@ def test_several_citations_share_one_source_control(evidence_app, groq_http):
 
     groq_http["reply"] = two
     at = submit(evidence_app)
-    panel, _ = at.expander
-    assert panel.label == "Show 2 sources" and len(panel.get("link_button")) == 2 and not at.exception
-    assert [item.value for item in panel.text] == [QUOTE, "for the workflow."]
+    assert not at.exception and len(at.get("link_button")) == 2
+    # Quotes and links sit under the claim; the only expanders are settings and retrieval details.
+    assert [panel.label for panel in at.expander] == ["Search settings", "Retrieval details"]
+    captions = [item.value for item in at.caption]
+    assert "Exact quote 1 of 2 · location verified" in captions and "Exact quote 2 of 2 · location verified" in captions
+    assert visible_plain_text(at) == [QUOTE, "for the workflow."]
+
+
+def test_quotes_keep_literal_characters_line_breaks_and_code_indentation(tmp_path, monkeypatch):
+    entity = "Escape an ampersand as &amp; in HTML, and write *args literally."
+    code = "def scale(X):\n    mean = X.mean(axis=0)\n    return X - mean"
+    at = fixture_app(tmp_path, monkeypatch, "<p>Escape an ampersand as &amp;amp; in HTML, and write *args "
+                     f"literally.</p><pre>{code}\n</pre>")
+
+    def generate(self, contents):
+        evidence = json.loads(contents)["evidence"]
+        cite = lambda quote: next({"chunk_id": s["chunk_id"], "document_id": s["document_id"], "quote": quote}
+                                  for s in evidence if quote in s["text"])
+        return json.dumps({"status": "answered", "claims": [
+            {"text": "HTML escapes an ampersand.", "kind": "explicit", "citations": [cite(entity)]},
+            {"text": "The example centers the data.", "kind": "explicit", "citations": [cite(code)]}]}), {}
+
+    monkeypatch.setattr("src.gemini.Gemini.generate", generate)
+    at.text_area[0].input("How do I escape an ampersand and center data?")
+    at.button[0].click().run()
+    assert not at.exception and not at.error
+    # Exactly as cited: the entity is not decoded, Markdown is not applied, line breaks and indentation stay.
+    assert visible_plain_text(at) == [entity, code]
+    assert not any("&amp;" in item.value or "    mean" in item.value for item in at.markdown)
 
 
 def test_unknown_provider_sends_no_request_and_keeps_sources_visible(evidence_app, groq_http, monkeypatch):
